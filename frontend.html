@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classroom Allocation System | Smart Timetable Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo p {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Dashboard Cards */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+
+        .card .number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+        }
+
+        /* Timetable */
+        .timetable-container {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        .timetable-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #d97706;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            border: 1px solid #e5e7eb;
+            padding: 0.75rem;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f9fafb;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .time-slot {
+            background: #f9fafb;
+            font-weight: 600;
+            width: 80px;
+        }
+
+        .booking-card {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-left: 3px solid #667eea;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+        }
+
+        .booking-card.extra {
+            border-left-color: #f59e0b;
+            background: linear-gradient(135deg, #f59e0b15 0%, #ef444415 100%);
+        }
+
+        .booking-subject {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .booking-teacher {
+            color: #666;
+            font-size: 0.7rem;
+        }
+
+        .booking-room {
+            color: #667eea;
+            font-size: 0.7rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .form-card h3 {
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #555;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            ring: 2px solid #667eea;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .close {
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 1500;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            border-left: 4px solid #10b981;
+        }
+
+        .toast.error {
+            border-left: 4px solid #ef4444;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Spinner -->
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <span id="toastMessage"></span>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">
+                <h1>📚 Classroom Allocation System</h1>
+                <p>Smart Timetable Management with DAA Algorithms</p>
+            </div>
+            <div class="status">
+                <div class="status-indicator"></div>
+                <span id="apiStatus">Checking API Status...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Dashboard -->
+        <div class="dashboard">
+            <div class="card" onclick="showBookings()">
+                <div class="card-icon">📅</div>
+                <h3>Total Bookings</h3>
+                <div class="number" id="totalBookings">0</div>
+            </div>
+            <div class="card" onclick="showClassrooms()">
+                <div class="card-icon">🏫</div>
+                <h3>Classrooms</h3>
+                <div class="number" id="totalClassrooms">6</div>
+            </div>
+            <div class="card" onclick="showSubjects()">
+                <div class="card-icon">📖</div>
+                <h3>Subjects</h3>
+                <div class="number" id="totalSubjects">0</div>
+            </div>
+            <div class="card">
+                <div class="card-icon">👨‍🏫</div>
+                <h3>Teachers</h3>
+                <div class="number" id="totalTeachers">0</div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Timetable Section -->
+            <div class="timetable-container">
+                <div class="timetable-header">
+                    <h2>📅 Weekly Schedule</h2>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="generateTimetable()">
+                            🔄 Generate Timetable
+                        </button>
+                        <button class="btn btn-success" onclick="exportToCSV()">
+                            📥 Export CSV
+                        </button>
+                        <button class="btn btn-warning" onclick="generateReport()">
+                            📄 Generate Report
+                        </button>
+                        <button class="btn btn-danger" onclick="refreshData()">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                </div>
+                <div id="timetable">
+                    <p style="text-align: center; padding: 2rem;">Loading timetable...</p>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Extra Class Form -->
+                <div class="form-card">
+                    <h3>➕ Allocate Extra Class</h3>
+                    <form id="extraClassForm">
+                        <div class="form-group">
+                            <label>Teacher Name *</label>
+                            <input type="text" id="teacherName" required placeholder="e.g., Dr. Smith">
+                        </div>
+                        <div class="form-group">
+                            <label>Number of Students *</label>
+                            <input type="number" id="numStudents" required value="30" min="1" max="200">
+                        </div>
+                        <div class="form-group">
+                            <label>Duration (hours) *</label>
+                            <input type="number" id="duration" required value="1" min="1" max="4">
+                        </div>
+                        <div class="form-group">
+                            <label>Day *</label>
+                            <select id="day">
+                                <option value="Monday">Monday</option>
+                                <option value="Tuesday">Tuesday</option>
+                                <option value="Wednesday">Wednesday</option>
+                                <option value="Thursday">Thursday</option>
+                                <option value="Friday">Friday</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Start Hour *</label>
+                            <input type="number" id="startHour" required value="9" min="9" max="16">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">
+                            ✅ Allocate Classroom
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="form-card">
+                    <h3>⚡ Quick Actions</h3>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <button class="btn btn-primary" onclick="clearAllData()">
+                            🗑️ Clear All Data
+                        </button>
+                        <button class="btn btn-success" onclick="saveToFile()">
+                            💾 Save to File
+                        </button>
+                        <button class="btn btn-warning" onclick="loadFromFile()">
+                            📂 Load from File
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Legend -->
+                <div class="form-card">
+                    <h3>📌 Legend</h3>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div style="width: 20px; height: 20px; background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); border-left: 3px solid #667eea;"></div>
+                            <span>Regular Class</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div style="width: 20px; height: 20px; background: linear-gradient(135deg, #f59e0b15 0%, #ef444415 100%); border-left: 3px solid #f59e0b;"></div>
+                            <span>Extra Class</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Details</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE_URL = (() => {
+            const origin = window.location.origin;
+            if (!origin || origin === 'null') {
+                return 'http://localhost:8080/api';
+            }
+            return `${origin}/api`;
+        })();
+        let bookings = [];
+        let classrooms = [];
+        let subjects = [];
+
+        // Days and Hours
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        const hours = Array.from({ length: 9 }, (_, i) => i + 9); // 9 AM to 5 PM
+
+        // Helper Functions
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            toastMessage.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.style.display = 'flex';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function openModal(title, content) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalBody').innerHTML = content;
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        // API Calls
+        async function checkAPIStatus() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/bookings`);
+                if (response.ok) {
+                    document.getElementById('apiStatus').innerHTML = '✅ Connected to Backend';
+                    document.getElementById('apiStatus').style.color = '#10b981';
+                    return true;
+                }
+            } catch (error) {
+                document.getElementById('apiStatus').innerHTML = '⚠️ Backend Not Running';
+                document.getElementById('apiStatus').style.color = '#ef4444';
+                return false;
+            }
+        }
+
+        async function fetchBookings() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/bookings`);
+                const data = await response.json();
+                bookings = data.bookings || [];
+                updateDashboard();
+                renderTimetable();
+                return bookings;
+            } catch (error) {
+                console.error('Error fetching bookings:', error);
+                showToast('Failed to fetch bookings', 'error');
+                return [];
+            }
+        }
+
+        async function generateTimetable() {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE_URL}/generate`, {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    showToast('Timetable generated successfully!');
+                    await fetchBookings();
+                } else {
+                    showToast('Failed to generate timetable', 'error');
+                }
+            } catch (error) {
+                showToast('Error: Backend not running', 'error');
+            }
+            hideLoading();
+        }
+
+        async function allocateExtraClass(event) {
+            event.preventDefault();
+            showLoading();
+            
+            const data = {
+                teacherName: document.getElementById('teacherName').value,
+                numStudents: parseInt(document.getElementById('numStudents').value),
+                duration: parseInt(document.getElementById('duration').value),
+                day: document.getElementById('day').value,
+                startHour: parseInt(document.getElementById('startHour').value)
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/extra`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    showToast('Extra class allocated successfully!');
+                    await fetchBookings();
+                    document.getElementById('extraClassForm').reset();
+                } else {
+                    showToast('Failed to allocate class (no available room)', 'error');
+                }
+            } catch (error) {
+                showToast('Error: Backend not running', 'error');
+            }
+            hideLoading();
+        }
+
+        async function exportToCSV() {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE_URL}/export/csv`);
+                if (response.ok) {
+                    showToast('CSV exported successfully! Check server directory');
+                } else {
+                    showToast('Export failed', 'error');
+                }
+            } catch (error) {
+                showToast('Error: Backend not running', 'error');
+            }
+            hideLoading();
+        }
+
+        async function generateReport() {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE_URL}/report`);
+                if (response.ok) {
+                    showToast('Report generated successfully! Check server directory');
+                } else {
+                    showToast('Report generation failed', 'error');
+                }
+            } catch (error) {
+                showToast('Error: Backend not running', 'error');
+            }
+            hideLoading();
+        }
+
+        async function saveToFile() {
+            showLoading();
+            // This would require a new endpoint, but we'll simulate
+            showToast('Save to file feature - Implement backend endpoint', 'error');
+            hideLoading();
+        }
+
+        async function loadFromFile() {
+            showLoading();
+            showToast('Load from file feature - Implement backend endpoint', 'error');
+            hideLoading();
+        }
+
+        async function clearAllData() {
+            if (confirm('⚠️ This will clear all data! Are you sure?')) {
+                showLoading();
+                showToast('Clear data feature - Implement backend endpoint', 'error');
+                hideLoading();
+            }
+        }
+
+        function updateDashboard() {
+            document.getElementById('totalBookings').textContent = bookings.length;
+            
+            // Extract unique teachers
+            const uniqueTeachers = new Set(bookings.map(b => b.teacher));
+            document.getElementById('totalTeachers').textContent = uniqueTeachers.size;
+            
+            // Extract unique subjects
+            const uniqueSubjects = new Set(bookings.map(b => b.subject));
+            document.getElementById('totalSubjects').textContent = uniqueSubjects.size;
+        }
+
+        function renderTimetable() {
+            if (!bookings.length) {
+                document.getElementById('timetable').innerHTML = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <p>📭 No classes scheduled yet.</p>
+                        <p>Click "Generate Timetable" to create schedule.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Time</th>';
+            days.forEach(day => {
+                html += `<th>${day}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+
+            hours.forEach(hour => {
+                html += `<tr><td class="time-slot">${hour}:00 - ${hour + 1}:00</td>`;
+                
+                days.forEach(day => {
+                    const bookingsInSlot = bookings.filter(booking => 
+                        booking.day === day && 
+                        booking.startHour <= hour && 
+                        booking.endHour > hour
+                    );
+                    
+                    html += '<td>';
+                    if (bookingsInSlot.length > 0) {
+                        bookingsInSlot.forEach(booking => {
+                            const bookingClass = booking.type === 'extra' ? 'extra' : '';
+                            html += `
+                                <div class="booking-card ${bookingClass}">
+                                    <div class="booking-subject">${booking.subject}</div>
+                                    <div class="booking-teacher">👨‍🏫 ${booking.teacher}</div>
+                                    <div class="booking-room">🏫 Room ${booking.classroomId}</div>
+                                    <div class="booking-teacher">⏰ ${booking.startHour}:00 - ${booking.endHour}:00</div>
+                                </div>
+                            `;
+                        });
+                    }
+                    html += '</td>';
+                });
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            document.getElementById('timetable').innerHTML = html;
+        }
+
+        function showBookings() {
+            if (bookings.length === 0) {
+                openModal('Bookings', '<p>No bookings found.</p>');
+                return;
+            }
+            
+            let content = '<div style="max-height: 400px; overflow-y: auto;">';
+            bookings.forEach(booking => {
+                content += `
+                    <div style="border-bottom: 1px solid #e5e7eb; padding: 0.5rem; margin-bottom: 0.5rem;">
+                        <strong>${booking.subject}</strong><br>
+                        Teacher: ${booking.teacher}<br>
+                        ${booking.day} ${booking.startHour}:00 - ${booking.endHour}:00<br>
+                        Room: ${booking.classroomId} | Type: ${booking.type}
+                    </div>
+                `;
+            });
+            content += '</div>';
+            openModal('All Bookings', content);
+        }
+
+        function showClassrooms() {
+            const content = `
+                <div>
+                    <p><strong>Default Classrooms:</strong></p>
+                    <ul style="margin-top: 1rem;">
+                        <li>🏫 Room 101 - Capacity: 30</li>
+                        <li>🏫 Room 102 - Capacity: 40</li>
+                        <li>🏫 Room 103 - Capacity: 50</li>
+                        <li>🏫 Room 201 - Capacity: 60</li>
+                        <li>🏫 Room 202 - Capacity: 80</li>
+                        <li>🏫 Auditorium - Capacity: 150</li>
+                    </ul>
+                </div>
+            `;
+            openModal('Classrooms', content);
+        }
+
+        function showSubjects() {
+            const uniqueSubjects = [...new Set(bookings.map(b => b.subject))];
+            if (uniqueSubjects.length === 0) {
+                openModal('Subjects', '<p>No subjects scheduled yet.</p>');
+                return;
+            }
+            
+            let content = '<div style="max-height: 400px; overflow-y: auto;"><ul>';
+            uniqueSubjects.forEach(subject => {
+                content += `<li>📖 ${subject}</li>`;
+            });
+            content += '</ul></div>';
+            openModal('Subjects', content);
+        }
+
+        async function refreshData() {
+            showLoading();
+            await fetchBookings();
+            hideLoading();
+            showToast('Data refreshed!');
+        }
+
+        // Event Listeners
+        document.getElementById('extraClassForm').addEventListener('submit', allocateExtraClass);
+
+        // Initialize
+        async function init() {
+            await checkAPIStatus();
+            await fetchBookings();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(async () => {
+                await fetchBookings();
+            }, 30000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
