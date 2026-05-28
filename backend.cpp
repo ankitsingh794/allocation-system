@@ -1263,4 +1263,3 @@ int main(int argc, char* argv[]) {
         return runCli(system);
     }
     return runServer(system);
-}
